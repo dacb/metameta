@@ -25,15 +25,13 @@ echo "processing sample $sample from path $fastq_path with fastq filename $fastq
 is_file_readable $fastq_path
 # second, assemble what the remote path will be
 remote_fastq_path=data/$sample/Raw_Data/$fastq_file
-echo --
-echo $remote_fastq_path/$fastq_file
-echo --
 
 # now, let's check if the local copy of the remote path exists, if so, don't recopy
 # the local copy
 mkdir -p `dirname "$remote_fastq_path"`
 if [ ! -e "$remote_fastq_path" ]
 then
+	echo "making local copy"
 	gnucp "$fastq_path" $remote_fastq_path
 else
 	echo "skipping copying of fastq into data directory"
