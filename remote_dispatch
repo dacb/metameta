@@ -32,6 +32,8 @@ upload_fastq $sample $local_path
 echo checking for log files for the jobs
 # quick function to do this
 # initialize $missing to 0 (missing=0) before calling this function
+# missing will contain the number of subsequent missing logs
+# this is useful to check a list of logs, e.g. aln, samtools, database
 log_check() {
 	log=$1
 	# if any value of $2 is present this is in quiet mode, see below
@@ -54,13 +56,13 @@ log_check aln
 log_check samtools
 log_check database
 if [ "$missing" -ne 0 ]; then
-	echo "some log files are missing"
+	echo "some log files are missing" # thanks, sherlock
 	if [ "$missing" -eq 3 ]; then
 		echo "no log files found on remote, submitting jobs"
 		ssh_cmd "(cd $REMOTE_ROOT/analysis; ./sample_submit $sample)"
 	else
 		echo "WARNING: some of the log files were missing for $sample, but not all" 
-		job_complete=1
+		job_complete=1 # not really true, but it escapes the loop below to allow for log reader inspection
 	fi
 else
 	echo "all log files found for job, it must be complete - skipping submit and poll"
