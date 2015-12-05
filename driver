@@ -6,34 +6,6 @@ source $DIR/init.sh
 for sample in $SAMPLES
 do
 	echo "sample: $sample"
-    dirpath="workspace/$sample/bwa/"
-	missing=0
-	if [ ! -e $dirpath/aln.log ] 
-	then
-		missing=$(($missing+1))
-		echo "analysis log not found: $dirpath/aln.log"
-	fi
-	if [ ! -e $dirpath/samtools.log ] 
-	then
-		missing=$(($missing+1))
-		echo "samtools log not found: $dirpath/samtools.log"
-	fi
-	if [ ! -e $dirpath/database.log ] 
-	then
-		missing=$(($missing+1))
-		echo "database log not found: $dirpath/database.log"
-	fi
-
-	if [ $missing -eq 0 ]
-	then
-		echo "analysis looks complete for sample $sample"
-	elif [ $missing -eq 3 ]
-	then
-		echo "all analysis logs are missing, assuming sample hasn't been run, trying now"
-		$DIR/remote_dispatch $sample
-	else
-		echo "hmm.. something went wrong, found $missing missing logs from analysis of sample $sample - was it not completed?"
-	fi
-
+	$DIR/remote_dispatch $sample
 	echo "-----------------------------------------------"
 done
