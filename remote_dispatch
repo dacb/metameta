@@ -40,7 +40,10 @@ log_check() {
 	log_path=workspace/$sample/bwa/$log.log
 	log_check=`remote_file_exists $log_path`
 	if [ -n "$log_check" ]; then
-		echo "log_check found $log_path on remote"
+		# mute if more than 1 argument is present
+		if [ $# -eq 1 ]; then
+			echo "log_check found $log_path on remote"
+		fi
 	else
 		# mute if more than 1 argument is present
 		if [ $# -eq 1 ]; then
