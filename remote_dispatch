@@ -30,30 +30,65 @@ upload_fastq $sample $local_path
 
 # qsub the jobs if the log files don't already exist
 echo checking for log files for the jobs
-alnlog=`remote_file_exists_10mins_old workspace/$sample/bwa/aln.log`
-samtoolslog=`remote_file_exists_10mins_old workspace/$sample/bwa/samtools.log`
-databaselog=`remote_file_exists_10mins_old workspace/$sample/bwa/database.log`
-if [ -n "$alnlog" ] && [ -n "$samtoolslog" ] && [ -n "$databaselog" ] 
-then
+# quick function to do this
+# initialize $missing to 0 (missing=0) before calling this function
+log_check() {
+	log=$1
+	log_path=workspace/$sample/bwa/$log.log
+	log_check=`remote_file_exists $log_path`
+	if [ -n "$log_check" ]; then
+		echo "log_check found $log_path on remote"
+	else
+		# global used to track # of missing log files
+		echo "log_check could not find $log_path on remote"
+		missing=$(($missing+1))
+	fi
+}
+# global used by the function above to track the number of missing logs
+missing=0
+log_check aln
+log_check samtools
+log_check database
+if [ "$missing" -ne 0 ]; then
+	echo "some log files are missing"
+	if [ "$missing" -eq 3 ]; then
+		echo "no log files found on remote, submitting jobs"
+		ssh_cmd "(cd $REMOTE_ROOT/analysis; ./sample_submit $sample)"
+	else
+		echo "WARNING: some of the log files were missing for $sample, but not all" 
+		job_complete=1
+	fi
+else
 	echo "all log files found for job, it must be complete - skipping submit and poll"
 	job_complete=1
-else
-	echo "no log files found on remote, submitting jobs"
-	ssh_cmd "(cd $REMOTE_ROOT/analysis; ./sample_submit $sample)"
 fi
 
 # poll for the .log files that signal completion
 echo "entering main log polling loop"
 minutes=0
-while [ ! -n "$job_complete" ]
-do
+last_minutes=0
+last_missing=$missing
+while [ ! -n "$job_complete" ]; do
 		sleep 60
 		minutes=$(($minutes + 1))
-		alnlog=`remote_file_exists_10mins_old workspace/$sample/bwa/aln.log`
-		samtoolslog=`remote_file_exists_10mins_old workspace/$sample/bwa/samtools.log`
-		databaselog=`remote_file_exists_10mins_old workspace/$sample/bwa/database.log`
-		if [ -n "$alnlog" ] && [ -n "$samtoolslog" ] && [ -n "$databaselog" ] 
-		then
+		missing=0
+		log_check aln
+		log_check samtools
+		log_check database
+		if [ $missing -ne 0 ]; then
+			if [ $missing -ne $last_missing ]; then
+				if [ $last_missing -eq 3 ]; then
+					last_completed_job="aln"
+				elif [ $last_missing -eq 2 ]; then
+					last_completed_job="samtools"
+				else
+					# won't happen
+					last_completed_job="database"
+				fi
+				elapsed=$(($minutes - $last_minutes))
+				echo "job $last_completed_job took $elapsed minutes"
+			fi
+		else
 				echo "all log files found for sample $sample after $minutes minutes"
 				job_complete=1
 		fi
