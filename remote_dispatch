@@ -91,10 +91,12 @@ while [ ! -n "$job_complete" ]; do
 				fi
 				elapsed=$(($minutes - $last_minutes))
 				echo "job $last_completed_job took $elapsed minutes"
+				last_missing=$missing
 			fi
 		else
 				echo "all log files found for sample $sample after $minutes minutes"
 				job_complete=1
+				last_missing=$missing
 		fi
 		if [ $(($minutes % 60)) -eq 0 ]
 		then
