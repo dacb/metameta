@@ -1,0 +1,76 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/init.sh
+
+usage() {
+cat << EOF
+usage: $0 <sample name>
+EOF
+	exit 1
+}
+
+if [ $# -ne 1 ]
+then
+	usage
+fi
+
+sample=$1
+
+remote_fastq_path=`awk -F'\t' -v sample="$sample" '{ if ($1 == sample) printf("%s\n", $6); }' $SAMPLE_INFO`
+if [ ! -n "$remote_fastq_path" ]
+then
+	fatal_error "unable to find sample $sample in sample info file"
+fi
+
+local_path=`\ls $RAW_DATA_ROOT/Methane_oxidation_as_a_community_function__defining_partnerships_and_strategies_through_sequencing_metagenomes_and_metatranscriptomes_of_laboratory_manipulated_microcosms__Lake_Washington_sediment_Metatranscriptome_*_\[$sample\]/Raw_Data/*.fastq.gz`
+
+# upload the fastq using the pathes constructed
+upload_fastq $sample $local_path
+
+# qsub the jobs if the log files don't already exist
+echo checking for log files for the jobs
+alnlog=`remote_file_exists_10mins_old workspace/$sample/bwa/aln.log`
+samtoolslog=`remote_file_exists_10mins_old workspace/$sample/bwa/samtools.log`
+databaselog=`remote_file_exists_10mins_old workspace/$sample/bwa/database.log`
+if [ -n "$alnlog" ] && [ -n "$samtoolslog" ] && [ -n "$databaselog" ] 
+then
+	echo "all log files found for job, it must be complete - skipping submit and poll"
+	job_complete=1
+else
+	echo "no log files found on remote, submitting jobs"
+	ssh_cmd "(cd $REMOTE_ROOT/analysis; ./sample_submit $sample)"
+fi
+
+# poll for the .log files that signal completion
+echo "entering main log polling loop"
+minutes=0
+while [ ! -n "$job_complete" ]
+do
+		sleep 60
+		minutes=$(($minutes + 1))
+		alnlog=`remote_file_exists_10mins_old workspace/$sample/bwa/aln.log`
+		samtoolslog=`remote_file_exists_10mins_old workspace/$sample/bwa/samtools.log`
+		databaselog=`remote_file_exists_10mins_old workspace/$sample/bwa/database.log`
+		if [ -n "$alnlog" ] && [ -n "$samtoolslog" ] && [ -n "$databaselog" ] 
+		then
+				echo "all log files found for sample $sample after $minutes minutes"
+				job_complete=1
+		fi
+		if [ $(($minutes % 60)) -eq 0 ]
+		then
+				echo "1 hour has elapsed"
+		fi
+done
+
+# remove the fastq file
+echo "removing remote fastq"
+remove_path_on_remote data/$sample
+
+# bring down the results
+echo "rsyncing results"
+rsync_remote
+
+# clean up the remote workspace so we don't run out of space
+echo "remove workspace on remote"
+remove_path_on_remote workspace/$sample

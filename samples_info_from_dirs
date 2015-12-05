@@ -1,0 +1,20 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/init.sh
+
+# SAMPLES could be from a bad sample_info.xls after init.sh in this script 
+# so we regen the list of samples from the raw data directories.
+fastq_files=`find /dacb/globus/*Metatrans*/Raw_Data -name '*.fastq.gz'`
+
+# header
+printf "#sample\tshortd\tmutation_locus\tbior\ttechr\tpath_to_FASTQ\tread_length\tpath_to_genome_FASTA\tpath_to_proteome_FASTA\tpath_to_gff\tgene_table\tinclude?\tis_qc?\n"
+
+for file in $fastq_files
+do
+	#echo $file
+	sample=`echo $file | awk '{ split($1, array, "["); split(array[2], array2, "]"); print array2[1]; }'`
+	fastq_file=`basename $file`
+	#echo $sample $fastq_file
+	printf "$sample\t$sample\t\t1\t1\t/gscratch/lidstrom/meta4/data/$sample/Raw_Data/$fastq_file\t151\t/gscratch/lidstrom/meta4/data/isolate_genomes.fasta\t\t/gscratch/lidstrom/meta4/data/isolate_genomes.gbk.gff\tgenes_isolate_genomes\t1\t0\n"
+done

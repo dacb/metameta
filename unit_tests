@@ -1,0 +1,33 @@
+#!/bin/bash 
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/init.sh
+
+file=workspace   # as in /gscratch/lidstrom/meta4/workspace/
+# remote_file_exists is defined in init.sh 
+rfe_test=`remote_file_exists $file`
+# -n checks for nonzero length.  
+if [ -n "$rfe_test" ]
+then
+	echo "remote_file_exists file exists test passed"
+else
+	fatal_error "test failed! $file should exist!"
+fi
+
+file=Ilikehappymonkeyswithtails  # an unlikely file name
+rfe_test=`remote_file_exists $file`
+if [ -n "$rfe_test" ]
+then
+	fatal_error "test failed! $file should not exist!"  # fatal_error defined in init.sh
+else
+	echo "remote file exists file does not exist test passed"
+fi
+
+file=analysis/Ilikehappymonkeyswithtails  # an unlikely file name
+rfe_test=`remote_file_exists $file`
+if [ -n "$rfe_test" ]
+then
+	fatal_error "test failed! $file should not exist!"  # fatal_error defined in init.sh
+else
+	echo "remote file exists file does not exist test passed"
+fi
