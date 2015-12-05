@@ -25,29 +25,35 @@ fi
 
 local_path=`\ls $RAW_DATA_ROOT/Methane_oxidation_as_a_community_function__defining_partnerships_and_strategies_through_sequencing_metagenomes_and_metatranscriptomes_of_laboratory_manipulated_microcosms__Lake_Washington_sediment_Metatranscriptome_*_\[$sample\]/Raw_Data/*.fastq.gz`
 
-# upload the fastq using the pathes constructed
-upload_fastq $sample $local_path
-
 # qsub the jobs if the log files don't already exist
 echo checking for log files for the jobs
 # quick function to do this
 # initialize $missing to 0 (missing=0) before calling this function
 # missing will contain the number of subsequent missing logs
 # this is useful to check a list of logs, e.g. aln, samtools, database
+# takes three arguments:
+# the path to the log file
+# 'local' or 'remote'
+# a measure of verbosity with only 'silent' being meaning ful
 log_check() {
 	log=$1
-	# if any value of $2 is present this is in quiet mode, see below
+	lorr=$2
+	verbosity=$3
 	log_path=workspace/$sample/bwa/$log.log
-	log_check=`remote_file_exists $log_path`
+	if [ "$lorr" == "remote" ]; then
+		log_check=`remote_file_exists $log_path`
+	else
+		log_check=`local_file_exists $log_path`
+	fi
 	if [ -n "$log_check" ]; then
 		# mute if more than 1 argument is present
-		if [ $# -eq 1 ]; then
-			echo "log_check found $log_path on remote"
+		if [ "$verbosity" != "silent" ]; then
+			echo "log_check found $log_path on $lorr"
 		fi
 	else
 		# mute if more than 1 argument is present
-		if [ $# -eq 1 ]; then
-			echo "log_check could not find $log_path on remote"
+		if [ "$verbosity" != "silent" ]; then
+			echo "log_check could not find $log_path on $lorr"
 		fi
 		# global used to track # of missing log files
 		missing=$(($missing+1))
@@ -55,13 +61,16 @@ log_check() {
 }
 # global used by the function above to track the number of missing logs
 missing=0
-log_check aln
-log_check samtools
-log_check database
+log_check aln local verbose
+log_check samtools local verbose
+log_check database local verbose
 if [ "$missing" -ne 0 ]; then
 	echo "some log files are missing" # thanks, sherlock
 	if [ "$missing" -eq 3 ]; then
-		echo "no log files found on remote, submitting jobs"
+		echo "no log files found on remote, preparing fastq and submitting jobs"
+		# upload the fastq using the pathes constructed
+		upload_fastq $sample $local_path
+		# now submit
 		ssh_cmd "(cd $REMOTE_ROOT/analysis; ./sample_submit $sample)"
 	else
 		echo "WARNING: some of the log files were missing for $sample, but not all" 
@@ -81,9 +90,9 @@ while [ ! -n "$job_complete" ]; do
 		sleep 60
 		minutes=$(($minutes + 1))
 		missing=0
-		log_check aln -quiet
-		log_check samtools -quiet
-		log_check database -quiet
+		log_check aln remote quiet
+		log_check samtools remote quiet
+		log_check database remote quiet
 		if [ $missing -ne 0 ]; then
 			if [ $missing -ne $last_missing ]; then
 				if [ $last_missing -eq 3 ]; then
