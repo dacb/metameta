@@ -81,42 +81,44 @@ else
 	job_complete=1
 fi
 
-# poll for the .log files that signal completion
-echo "entering main log polling loop"
-minutes=0
-last_minutes=0
-last_missing=$missing
-while [ ! -n "$job_complete" ]; do
-		sleep 60
-		minutes=$(($minutes + 1))
-		missing=0
-		log_check aln remote quiet
-		log_check samtools remote quiet
-		log_check database remote quiet
-		if [ $missing -ne 0 ]; then
-			if [ $missing -ne $last_missing ]; then
-				if [ $last_missing -eq 3 ]; then
-					last_completed_job="aln"
-				elif [ $last_missing -eq 2 ]; then
-					last_completed_job="samtools"
-				else
-					# won't happen
-					last_completed_job="database"
+if [ "$job_complete" -ne 1 ]; then
+	# poll for the .log files that signal completion on remote
+	echo "entering main log polling loop"
+	minutes=0
+	last_minutes=0
+	last_missing=$missing
+	while [ ! -n "$job_complete" ]; do
+			sleep 60
+			minutes=$(($minutes + 1))
+			missing=0
+			log_check aln remote quiet
+			log_check samtools remote quiet
+			log_check database remote quiet
+			if [ $missing -ne 0 ]; then
+				if [ $missing -ne $last_missing ]; then
+					if [ $last_missing -eq 3 ]; then
+						last_completed_job="aln"
+					elif [ $last_missing -eq 2 ]; then
+						last_completed_job="samtools"
+					else
+						# won't happen
+						last_completed_job="database"
+					fi
+					elapsed=$(($minutes - $last_minutes))
+					echo "job $last_completed_job took $elapsed minutes"
+					last_missing=$missing
 				fi
-				elapsed=$(($minutes - $last_minutes))
-				echo "job $last_completed_job took $elapsed minutes"
-				last_missing=$missing
+			else
+					echo "all log files found for sample $sample after $minutes minutes"
+					job_complete=1
+					last_missing=$missing
 			fi
-		else
-				echo "all log files found for sample $sample after $minutes minutes"
-				job_complete=1
-				last_missing=$missing
-		fi
-		if [ $(($minutes % 60)) -eq 0 ]
-		then
-				echo "1 hour has elapsed"
-		fi
-done
+			if [ $(($minutes % 60)) -eq 0 ]
+			then
+					echo "1 hour has elapsed"
+			fi
+	done
+fi
 
 # remove the fastq file
 echo "removing remote fastq"
