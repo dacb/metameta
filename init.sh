@@ -39,6 +39,13 @@ ssh_cmd() {
 	ssh -S $SSH_SOCKET $REMOTE_USER@$REMOTE_HOST $cmd
 }
 
+local_file_exists() {
+	file=$1
+	dirpre=`dirname $file`
+	filen=`basename $file`
+	test -d $dirpre && find $dirpre -name "$filen"
+}
+
 remote_file_exists() {
 	remote_file=$1
 	dirpre=`dirname $remote_file`
