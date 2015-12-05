@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# global variables, note the convention in this code is to have globals
+# defined here be in all caps
+
 # to be sourced
 SSH_SOCKET=/tmp/dacb-hyak-socket
 
