@@ -30,7 +30,7 @@ do
 	elif [ $missing -eq 3 ]
 	then
 		echo "all analysis logs are missing, assuming sample hasn't been run, trying now"
-		$DIR/remote_dispath $sample
+		$DIR/remote_dispatch $sample
 	else
 		echo "hmm.. something went wrong, found $missing missing logs from analysis of sample $sample - was it not completed?"
 	fi
