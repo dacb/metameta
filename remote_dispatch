@@ -61,6 +61,7 @@ log_check() {
 }
 # global used by the function above to track the number of missing logs
 missing=0
+job_complete=0
 log_check aln local verbose
 log_check samtools local verbose
 log_check database local verbose
@@ -87,7 +88,7 @@ if [ "$job_complete" -ne 1 ]; then
 	minutes=0
 	last_minutes=0
 	last_missing=$missing
-	while [ ! -n "$job_complete" ]; do
+	while [ "$job_complete" -ne 1 ]; do
 			sleep 60
 			minutes=$(($minutes + 1))
 			missing=0
