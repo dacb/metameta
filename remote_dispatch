@@ -66,9 +66,9 @@ log_check aln local verbose
 log_check samtools local verbose
 log_check database local verbose
 if [ "$missing" -ne 0 ]; then
-	echo "some log files are missing" # thanks, sherlock
+	echo "some log files are missing locally" # thanks, sherlock
 	if [ "$missing" -eq 3 ]; then
-		echo "no log files found on remote, preparing fastq and submitting jobs"
+		echo "no log files found locally, preparing & uploading fastq and submitting jobs"
 		# upload the fastq using the pathes constructed
 		upload_fastq $sample $local_path
 		# now submit
@@ -78,7 +78,7 @@ if [ "$missing" -ne 0 ]; then
 		job_complete=1 # not really true, but it escapes the loop below to allow for log reader inspection
 	fi
 else
-	echo "all log files found for job, it must be complete - skipping submit and poll"
+	echo "all log files found for job, it should be complete - skipping submit and poll"
 	job_complete=1
 fi
 
