@@ -34,7 +34,7 @@ echo checking for log files for the jobs
 # takes three arguments:
 # the path to the log file
 # 'local' or 'remote'
-# a measure of verbosity with only 'silent' being meaning ful
+# a measure of verbosity with only 'quiet' being meaningful
 log_check() {
 	log=$1
 	lorr=$2
@@ -47,12 +47,12 @@ log_check() {
 	fi
 	if [ -n "$log_check" ]; then
 		# mute if more than 1 argument is present
-		if [ "$verbosity" != "silent" ]; then
+		if [ "$verbosity" != "quiet" ]; then
 			echo "log_check found $log_path on $lorr"
 		fi
 	else
 		# mute if more than 1 argument is present
-		if [ "$verbosity" != "silent" ]; then
+		if [ "$verbosity" != "quiet" ]; then
 			echo "log_check could not find $log_path on $lorr"
 		fi
 		# global used to track # of missing log files
