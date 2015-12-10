@@ -62,6 +62,7 @@ log_check() {
 # global used by the function above to track the number of missing logs
 missing=0
 job_complete=0
+skip_rsync=0
 log_check aln local verbose
 log_check samtools local verbose
 log_check database local verbose
@@ -80,6 +81,7 @@ if [ "$missing" -ne 0 ]; then
 else
 	echo "all log files found for job, it should be complete - skipping submit and poll"
 	job_complete=1
+	skip_rsync=1
 fi
 
 if [ "$job_complete" -ne 1 ]; then
@@ -126,8 +128,11 @@ echo "removing remote fastq"
 remove_path_on_remote data/$sample
 
 # bring down the results
-echo "rsyncing results"
-rsync_remote
+if [ "$skip_rsync" -ne 1 ]
+then
+	echo "rsyncing results"
+	rsync_remote
+fi
 
 # clean up the remote workspace so we don't run out of space
 echo "remove workspace on remote"
