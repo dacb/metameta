@@ -75,11 +75,11 @@ remove_path_on_remote() {
 }
 
 gnucp() {
-    if hash gcp 2>/dev/null; then
-        gcp "$@"
-    else
+#    if hash gcp 2>/dev/null; then
+#        gcp "$@"
+#    else
         cp "$@"
-    fi
+#    fi
 }
 
 is_file_readable $SSH_SOCKET
