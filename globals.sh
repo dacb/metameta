@@ -4,13 +4,13 @@
 # defined here be in all caps
 
 # to be sourced
-SSH_SOCKET=/tmp/dacb-hyak-socket
+SSH_SOCKET=/tmp/$USER-hyak-socket
 
 RAW_DATA_ROOT=/dacb/globus
 
 LOCAL_ROOT=/dacb/meta4
 
-REMOTE_USER=dacb
+REMOTE_USER=$USER
 REMOTE_HOST=hyak
 REMOTE_ROOT=/gscratch/lidstrom/meta4
 
