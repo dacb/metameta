@@ -4,4 +4,5 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $DIR/init.sh
 
 cd ..
-rsync -a --whole-file -e "ssh -S $SSH_SOCKET" $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT .
+#rsync -a --whole-file -e "ssh -S $SSH_SOCKET" $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT .
+rsync -rlD --whole-file -e "ssh -S $SSH_SOCKET" $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT .
